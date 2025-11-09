@@ -29,3 +29,6 @@
 ```bash
 yarn
 
+### 2️⃣ รันโปรเจกต์ในโหมดพัฒนา (Dev Mode)
+```bash
+yarn dev
