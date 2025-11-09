@@ -1,60 +1,124 @@
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 
 const LoginForm = () => {
-  const { t } = useTranslation();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [show, setShow] = useState(false);
+    const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submit!", { username, password });
-    if (username && password) {
-      navigate("/");
+
+    if (!username || !password) {
+      alert("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
+      return;
+    }
+
+    // 🧠 mock users
+    const mockUsers = [
+      { username: "streamer", password: "1234", role: "streamer" },
+      { username: "donor", password: "1234", role: "donor" },
+    ];
+
+    const foundUser = mockUsers.find(
+      (u) => u.username === username && u.password === password
+    );
+
+    if (foundUser) {
+      // เก็บข้อมูลใน localStorage
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ username: foundUser.username, role: foundUser.role })
+      );
+
+      // Redirect ตาม role
+      if (foundUser.role === "admin") {
+        navigate("/dashboard/streamer");
+      } else {
+        navigate("/");
+      }
+    } else {
+      alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
   };
 
-  return (
-    <div className="bg-white py-10 px-6 sm:px-8 rounded-2xl text-center w-full max-w-md shadow-lg">
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">
-        {t("login.title")}
-      </h1>
-      <div className="w-20 h-1 bg-gradient-to-r from-blue-400 via-blue-200 to-blue-100 mx-auto mb-4 rounded" />
-      <p className="text-sm text-gray-500 mb-6">
-        {t("login.welcome")} <br />
-        <span className="text-blue-500 hover:underline cursor-pointer">
-          {t("login.forgot_password")}
-        </span>
-      </p>
+    return (
+        <div className="w-full flex items-center justify-center h-screen">
+            {/* กล่อง login */}
+            <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-xl w-full p-[20%] h-[95%]">
+                {/* Heading */}
+                <h1 className="text-3xl font-bold text-white mb-1">
+                    Welcome Back!
+                </h1>
+                <h2 className="text-xl font-semibold text-[#08CB00] mb-6">
+                    Stream Boost
+                </h2>
+                <p className="text-gray-300 text-sm mb-8">
+                    Sign in to manage your donations and track the impact of
+                    your support.
+                </p>
 
-      <form className="text-left" onSubmit={handleSubmit}>
-        <label className="text-gray-600 text-sm">{t("login.username")}</label>
-        <input
-          type="text"
-          className="w-full border-b border-gray-300 focus:outline-none focus:border-blue-400 py-2 mb-6"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+                {/* Form */}
+                <form className="space-y-6 text-left" onSubmit={handleSubmit}>
+                    <div>
+                        <label className="block text-sm text-white mb-1">
+                            Username/Email
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full px-4 py-2 rounded-md border bg-white text-[#888888] focus:outline-none focus:ring-2 focus:ring-green-500"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Enter your username or email"
+                        />
+                    </div>
 
-        <label className="text-gray-600 text-sm">{t("login.password")}</label>
-        <input
-          type="password"
-          className="w-full border-b border-gray-300 focus:outline-none focus:border-blue-400 py-2 mb-8"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+                    <div>
+                        <label className="block text-sm text-white mb-1">
+                            Password
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={show ? "text" : "password"}
+                                className="w-full px-4 py-2 rounded-md border bg-white text-[#888888] focus:outline-none focus:ring-2 focus:ring-green-500 pr-10"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter your password"
+                            />
+                            <button
+                                type="button"
+                                className="absolute inset-y-0 right-3 flex items-center text-gray-600"
+                                onClick={() => setShow(!show)}
+                            >
+                                {show ? (
+                                    <EyeOff className="h-5 w-5" />
+                                ) : (
+                                    <Eye className="h-5 w-5" />
+                                )}
+                            </button>
+                        </div>
+                        <div className="text-right mt-2">
+                            <a
+                                href="#"
+                                className="text-sm text-white hover:text-[#08CB00] transition"
+                            >
+                                Forget Password?
+                            </a>
+                        </div>
+                    </div>
 
-        <button
-          type="submit"
-          className="w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-300 hover:brightness-120 text-white font-bold py-3 rounded-full flex items-center justify-center gap-2"
-        >
-          <span>{t("login.continue")}</span>
-        </button>
-      </form>
-    </div>
-  );
+                    <button
+                        type="submit"
+                        className="w-full bg-[#08CB00] hover:bg-green-600 text-white font-bold py-3 rounded-lg transition"
+                    >
+                        Sign in
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
 };
 
 export default LoginForm;

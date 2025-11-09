@@ -1,140 +1,134 @@
-import { useState } from "react";
-import LanguageToggle from "./languageSwitcher";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import logo from "../assets/logo.png";
+import { BarChart3, Sliders, User, Wallet, Gift, Menu } from "lucide-react";
 
-const Topbar = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const { t } = useTranslation();
-    const navigate = useNavigate();
+const Sidebar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    const onToggleMenu = () => {
-        setIsOpen(!isOpen);
-    };
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
 
-    const handleLogout = () => {
+    if (userData) {
+      try {
+        const { role } = JSON.parse(userData);
+        setUserRole(role);
+      } catch {
+        // ถ้า JSON พังหรือไม่ถูก format ให้ logout ทิ้ง
+        localStorage.clear();
         navigate("/login");
-        console.log("logout clicked");
-    };
+      }
+    } else {
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  const onToggleSidebar = () => setIsOpen((prev) => !prev);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  // 🎯 เมนูแยกตาม role
+  const menuByRole = {
+    streamer: [
+      { name: "Dashboard", icon: BarChart3, path: "/dashboard/streamer" },
+      { name: "User Profile", icon: User, path: "/profile" },
+      { name: "Accounting", icon: Wallet, path: "/accounting" },
+      { name: "Edit Widget", icon: Sliders, path: "/widget" },
+    ],
+    donor: [
+      { name: "Dashboard", icon: BarChart3, path: "/dashboard/donor" },
+      { name: "History", icon: Gift, path: "/donation-history" },
+    ],
+  } as const;
+
+  const menuItems =
+    (userRole && menuByRole[userRole as keyof typeof menuByRole]) || [];
+
+  // 🧭 ถ้ายังโหลด role ไม่เสร็จ ให้แสดง loading
+  if (!userRole) {
+    return (
+      <div className="fixed top-0 left-0 w-full h-full bg-gray-900 flex items-center justify-center text-white">
+        Loading sidebar...
+      </div>
+    );
+  }
 
     return (
-        <header className="sticky top-0 bg-white/80 bg-gradient-to-r backdrop-blur-md shadow-sm font-poppins z-50 p-2 md:p-0">
-            <nav className="flex justify-between items-center w-[90%] mx-auto  relative">
-                {/* Logo */}
-                <div className="font-medium text-2xl">
-                    <button onClick={() => navigate("/")}>YOUTHAPP</button>
-                </div>
-                {/* Nav links */}
-                <div
-                    className={`${
-                        isOpen ? "flex" : "hidden"
-                    } md:flex flex-col md:flex-row fixed md:static top-full left-0 w-full h-[20vh] md:p-6 md:gap-4 md:w-auto md:h-auto bg-white md:bg-transparent z-40 items-center justify-center px-5 py-5 transition-all duration-300 ease-in-out`}
-                >
-                    <ul className="flex flex-col md:flex-row items-center gap-6 md:gap-10 text-gray-700 text-center w-full">
-                        <li className="hover:text-blue-500 transition-all">
-                            <button
-                                className="font-medium text-xl"
-                                onClick={() => navigate("/")}
-                            >
-                                {t("topbar.homepage")}
-                            </button>
-                        </li>
-                        <li className="hover:text-blue-500 transition-all">
-                            <button
-                                className="font-medium text-xl"
-                                onClick={() => navigate("/dashboard")}
-                            >
-                                {t("topbar.dashboard")}
-                            </button>
-                        </li>
-                        {/* Mobile only logout */}
-                        <li className="md:hidden">
-                            <button
-                                onClick={handleLogout}
-                                className="bg-[#393939] text-white px-5 py-3 rounded-full whitespace-nowrap"
-                            >
-                                {t("topbar.signout")}
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-
-                <div className="flex items-center gap-6">
-                    {/* Desktop only logout */}
-                    <button
-                        onClick={handleLogout}
-                        className="bg-[#393939] hover:bg-blue-500 text-white px-5 py-3 rounded-full hidden md:block"
-                    >
-                        {t("topbar.signout")}
-                    </button>
-                    <LanguageToggle />
-                                                            <button onClick={() => navigate("/setting")}>
-                        <svg
-                            className="w-8 h-8 text-gray-800 hover:text-blue-500"
-                            aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 13v-2a1 1 0 0 0-1-1h-.757l-.707-1.707.535-.536a1 1 0 0 0 0-1.414l-1.414-1.414a1 1 0 0 0-1.414 0l-.536.535L14 4.757V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v.757l-1.707.707-.536-.535a1 1 0 0 0-1.414 0L4.929 6.343a1 1 0 0 0 0 1.414l.536.536L4.757 10H4a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h.757l.707 1.707-.535.536a1 1 0 0 0 0 1.414l1.414 1.414a1 1 0 0 0 1.414 0l.536-.535 1.707.707V20a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.757l1.707-.708.536.536a1 1 0 0 0 1.414 0l1.414-1.414a1 1 0 0 0 0-1.414l-.535-.536.707-1.707H20a1 1 0 0 0 1-1Z"
-                            />
-                            <path
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-                            />
-                        </svg>
-                    </button>
-
-                    {/* Hamburger menu */}
+        <div className="flex">
+            {/* Sidebar */}
+            <div
+                className={`fixed top-0 left-0 h-full z-50 transform transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"} 
+          md:translate-x-0 w-72`}
+            >
+                <div className="flex flex-col h-full p-6">
+                    {/* Logo */}
                     <div
-                        onClick={onToggleMenu}
-                        className="text-xl cursor-pointer md:hidden z-50 w-full"
+                        className="flex items-center font-bold text-2xl mb-4 cursor-pointer"
+                        onClick={() => navigate("/")}
                     >
-                        {isOpen ? (
-                            <svg
-                                className="w-7 h-7 text-red-300"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
-                        ) : (
-                            <svg
-                                className="w-8 h-8 text-gray-800"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeWidth="2"
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
-                            </svg>
-                        )}
+                        <img
+                            className="ml-[-13%] w-24 object-contain"
+                            src={logo}
+                            alt="Logo"
+                            onClick={() => navigate("/")}
+                        />
+                        <span className="text-white whitespace-nowrap">
+                            Stream Boost
+                        </span>
+                    </div>
+
+                    {/* Menu List */}
+                    <ul className="flex flex-col gap-1 text-gray-700 bg-white/10 backdrop-blur-xl h-[79vh] p-4 rounded-xl">
+                        {menuItems.map(({ name, icon: Icon, path }) => {
+                            const isActive = location.pathname === path;
+                            return (
+                                <li key={path}>
+                                    <button
+                                        onClick={() => navigate(path)}
+                                        className={`flex items-center gap-2 p-3 rounded-xl mx-auto w-full font-medium text-lg transition-all 
+                      ${
+                          isActive
+                              ? "bg-[#253900] text-white"
+                              : "text-white hover:bg-[#253900]/60"
+                      }`}
+                                    >
+                                        <Icon className="w-6 h-6 mr-2 ml-2" />
+                                        <span className="whitespace-nowrap">
+                                            {name}
+                                        </span>
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+
+                    {/* Logout */}
+                    <div className="mt-auto">
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-900/50 hover:bg-red-700 text-white px-5 py-3 rounded-lg w-full flex items-center justify-center transition-all"
+                        >
+                            Logout
+                        </button>
                     </div>
                 </div>
-            </nav>
-        </header>
+            </div>
+
+            {/* Toggle Button (Mobile) */}
+            <div className="md:hidden fixed top-4 left-4 z-50">
+                <button onClick={onToggleSidebar}>
+                    {isOpen ? "❌" : <Menu className="w-6 h-6 text-white" />}
+                </button>
+            </div>
+        </div>
     );
 };
 
-export default Topbar;
+export default Sidebar;
