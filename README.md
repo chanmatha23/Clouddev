@@ -36,15 +36,9 @@
 
 ## 🧩 Tech Stack
 
-  
-
 | Frontend | Build Tool | UI Framework | Icons | Routing |
-
 |-----------|-------------|---------------|--------|----------|
-
 | React (TypeScript) | Vite | TailwindCSS | Lucide Icons | React Router DOM |
-
-  
 
 ---
 
