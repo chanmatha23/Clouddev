@@ -3,16 +3,17 @@ import { Copy, Globe } from "lucide-react";
 import LayoutWrapper from "../../components/Layout";
 
 export default function WidgetPage() {
+  const [color, setColor] = useState("#22c55e");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageBase64, setImageBase64] = useState("");
+
   const [donorName, setDonorName] = useState("PillowSis");
   const [amount, setAmount] = useState("1000");
   const [message, setMessage] = useState("Donate testing");
-  const [color, setColor] = useState("#22c55e");
 
-  const [imageUrl, setImageUrl] = useState(
-    "https://cdn-icons-png.flaticon.com/512/616/616408.png"
-  );
+  const API_GATEWAY = "https://dojfcue4bg.execute-api.us-east-1.amazonaws.com/app-streamer-widget-management";
+  const STREAMER_ID = "2c00bedc-b038-4b71-b53b-019af9367ae6";
 
-  // ✅ แทนที่จะ fix url → generate ตาม domain ปัจจุบัน
   const [widgetUrl, setWidgetUrl] = useState("");
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -29,8 +30,39 @@ export default function WidgetPage() {
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setImageUrl(url);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result;
+        if (typeof result === "string") {
+          setImageUrl(result);
+          setImageBase64(result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUpdateWidget = async () => {
+    try {
+      const payload = {
+        streamer_id: STREAMER_ID,
+        widget_message_color: color,
+        widget_image: imageBase64,
+      };
+
+      const res = await fetch(API_GATEWAY, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update widget");
+
+      alert("✅ Widget updated successfully!");
+    } catch (err) {
+      console.error("Error:", err);
+      alert("❌ " + (err instanceof Error ? err.message : "Failed to update widget"));
     }
   };
 
@@ -42,8 +74,6 @@ export default function WidgetPage() {
       color,
       imageUrl,
     };
-
-    // ส่งไป overlay
     const channel = new BroadcastChannel("widget-test");
     channel.postMessage(payload);
     channel.close();
@@ -66,10 +96,10 @@ export default function WidgetPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Preview */}
+        {/* ✅ Left: Test Donation */}
         <div className="rounded-xl flex flex-col items-center justify-center">
           <div className="bg-black/40 w-full h-[40vh] flex flex-col items-center justify-center rounded-lg mb-4 p-6 text-center">
-            <img src={imageUrl} className="w-20 h-20 mb-2" alt="donation" />
+            {imageUrl && <img src={imageUrl} className="w-20 h-20 mb-2" alt="donation" />}
             <p className="text-xl">
               <span className="text-2xl" style={{ color }}>{donorName}</span> donated{" "}
               <span className="text-2xl" style={{ color }}>{amount}</span> baht.
@@ -77,7 +107,6 @@ export default function WidgetPage() {
             <p className="text-xl text-gray-300">{message}</p>
           </div>
 
-          {/* Test Box */}
           <div className="bg-black/40 w-full p-6 rounded-lg relative h-[20vh]">
             <div className="flex justify-between items-center">
               <p className="text-gray-400 font-semibold">Test notification</p>
@@ -106,9 +135,8 @@ export default function WidgetPage() {
           </div>
         </div>
 
-        {/* Settings */}
+        {/* ✅ Right: Update Widget Settings */}
         <div className="bg-black/40 rounded-xl p-6 space-y-6">
-          {/* Upload Image */}
           <div className="border-2 border-dashed border-gray-500 rounded-lg h-40 flex flex-col items-center justify-center">
             <label className="text-gray-400 cursor-pointer">
               Click or drag to upload an image
@@ -119,55 +147,28 @@ export default function WidgetPage() {
                 onChange={handleUpload}
               />
             </label>
-            {imageUrl && (
-              <img src={imageUrl} alt="preview" className="w-20 h-20 mt-2" />
-            )}
+            {imageUrl && <img src={imageUrl} alt="preview" className="w-20 h-20 mt-2" />}
           </div>
 
-          {/* Donor Name */}
-          <div>
-            <label className="block text-sm mb-1 text-gray-300">
-              Donor's name
-            </label>
-            <input
-              value={donorName}
-              onChange={(e) => setDonorName(e.target.value)}
-              className="w-full bg-black/30 border border-gray-500 rounded-md px-3 py-2 text-white"
-            />
-          </div>
+          <div className="flex flex-row justify-between items-end">
+            <div>
+              <label className="block text-sm mb-1 text-gray-300">
+                Message Color
+              </label>
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="w-12 h-12 rounded border border-gray-500"
+              />
+            </div>
 
-          {/* Amount */}
-          <div>
-            <label className="block text-sm mb-1 text-gray-300">Amount</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full bg-black/30 border border-gray-500 rounded-md px-3 py-2 text-white"
-            />
-          </div>
-
-          {/* Message */}
-          <div>
-            <label className="block text-sm mb-1 text-gray-300">Message</label>
-            <input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full bg-black/30 border border-gray-500 rounded-md px-3 py-2 text-white"
-            />
-          </div>
-
-          {/* Message Color */}
-          <div>
-            <label className="block text-sm mb-1 text-gray-300">
-              Message Color
-            </label>
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="w-12 h-12 rounded border border-gray-500"
-            />
+            <button
+              onClick={handleUpdateWidget}
+              className="px-4 py-2 rounded-lg bg-[#11CA03] text-black hover:bg-green-400 cursor-pointer"
+            >
+              Update Widget
+            </button>
           </div>
         </div>
       </div>
